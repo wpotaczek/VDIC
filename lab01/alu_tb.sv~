@@ -35,13 +35,21 @@ typedef enum bit[2:0] {and_op			= 3'b000,
    reg [10:0] captured_C2 = 0;
    reg [10:0] captured_C3 = 0;
    reg [10:0] captured_C4 = 0;
+	reg [10:0] captured_B1 = 0;
+   reg [10:0] captured_B2 = 0;
+   reg [10:0] captured_B3 = 0;
+   reg [10:0] captured_B4 = 0;
+	reg [10:0] captured_A1 = 0;
+   reg [10:0] captured_A2 = 0;
+   reg [10:0] captured_A3 = 0;
+   reg [10:0] captured_A4 = 0;
    reg [10:0] captured_CTL = 0;
    reg [10:0] captured_ERROR = 0;
 	
 	bit [3:0] op_flags = 0;
 	bit [3:0] crc4_err = 0;
 	
-	bit [7:0] q_test_score[$];
+	bit [7:0] q_sin[$];
 	bit [7:0] q_alu_score[$];
 	   
 	operation_t  op_set;
@@ -53,7 +61,7 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 // Custom Macros/Tasks/Functions
 //------------------------------------------------------------------------------
 	
-	task send_byte(input frame_type, input [7:0] essence, inout [7:0] queue[$]);
+	task send_byte(input frame_type, input [7:0] essence);
 	begin
 		sin <= 1'b0;
 		@(posedge clk)
@@ -77,30 +85,36 @@ typedef enum bit[2:0] {and_op			= 3'b000,
       @(posedge clk)
 		sin <= 1'b1;
 		@(posedge clk);
-		queue.push_front(essence[7:0]);
 	end
 	endtask
 
-	task send_calculation_data (input [31:0] B, input [31:0] A, input [2:0] OP, input [3:0] CRC, inout [7:0] queue[$]);
+	task send_calculation_data (input [31:0] B, input [31:0] A, input [2:0] OP, input [3:0] CRC);
 	begin
-		send_byte(DATA_TYPE, B[31:24], queue);
-		send_byte(DATA_TYPE, B[23:16], queue);
-		send_byte(DATA_TYPE, B[15:8], queue);
-		send_byte(DATA_TYPE, B[7:0], queue);
+		send_byte(DATA_TYPE, B[31:24]);
+		send_byte(DATA_TYPE, B[23:16]);
+		send_byte(DATA_TYPE, B[15:8]);
+		send_byte(DATA_TYPE, B[7:0]);
 		
-		send_byte(DATA_TYPE, A[31:24], queue);
-		send_byte(DATA_TYPE, A[23:16], queue);
-		send_byte(DATA_TYPE, A[15:8], queue);
-		send_byte(DATA_TYPE, A[7:0], queue);		
+		send_byte(DATA_TYPE, A[31:24]);
+		send_byte(DATA_TYPE, A[23:16]);
+		send_byte(DATA_TYPE, A[15:8]);
+		send_byte(DATA_TYPE, A[7:0]);		
 	
-		send_byte(CMD_TYPE, {1'b0, OP, CRC}, queue);
+		send_byte(CMD_TYPE, {1'b0, OP, CRC});
 		
 	end	
 	endtask
 	
 	task wait_for_sof;
 	begin
-		while(t_sout == 1)
+		while(sout == 1)
+			@(posedge clk);
+	end
+	endtask
+	
+	task wait_for_sin_sof;
+	begin
+		while(sin == 1)
 			@(posedge clk);
 	end
 	endtask
@@ -139,6 +153,70 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 			@(posedge clk);
 		end		
 		cap_C = {captured_C1[8:1], captured_C2[8:1], captured_C3[8:1], captured_C4[8:1]};
+		cap_CTL = captured_CTL[8:1]; 
+		done = 1'b1;
+	end
+	endtask
+	
+	task sin_to_queue (output bit [31:0] cap_A, output bit [31:0] cap_B, output bit [7:0] cap_CTL);
+		
+	begin
+		wait_for_sof;
+		repeat (11)
+		begin
+			captured_B1 <= {captured_B1[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_B2 <= {captured_B2[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_B3 <= {captured_B3[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_B4 <= {captured_B4[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_A1 <= {captured_A1[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_A2 <= {captured_A2[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_A3 <= {captured_A3[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_A4 <= {captured_A4[9:0], t_sout};
+			@(posedge clk);
+		end
+		@(posedge clk);
+		repeat (11)
+		begin
+			captured_CTL <= {captured_CTL[9:0], t_sout};
+			@(posedge clk);
+		end
+		cap_B = {captured_B1[8:1], captured_B2[8:1], captured_B3[8:1], captured_B4[8:1]};
+		cap_A = {captured_A1[8:1], captured_A2[8:1], captured_A3[8:1], captured_A4[8:1]};
 		cap_CTL = captured_CTL[8:1]; 
 		done = 1'b1;
 	end
@@ -318,29 +396,29 @@ typedef enum bit[2:0] {and_op			= 3'b000,
          	end 
          	
          	er_data_op: begin : case_er_data_op        	
-	         	send_byte(DATA_TYPE, B[31:24], q_test_score);
-        			send_byte(DATA_TYPE, B[23:16], q_test_score);
-        			send_byte(DATA_TYPE, B[15:8], q_test_score);
-        			send_byte(DATA_TYPE, B[7:0], q_test_score);
+	         	send_byte(DATA_TYPE, B[31:24]);
+        			send_byte(DATA_TYPE, B[23:16]);
+        			send_byte(DATA_TYPE, B[15:8]);
+        			send_byte(DATA_TYPE, B[7:0]);
         
-        			send_byte(DATA_TYPE, A[31:24], q_test_score);
-        			send_byte(DATA_TYPE, A[23:16], q_test_score);
-        			send_byte(DATA_TYPE, A[15:8], q_test_score);
-        			send_byte(DATA_TYPE, A[7:0], q_test_score);
+        			send_byte(DATA_TYPE, A[31:24]);
+        			send_byte(DATA_TYPE, A[23:16]);
+        			send_byte(DATA_TYPE, A[15:8]);
+        			send_byte(DATA_TYPE, A[7:0]);
 	         	
-	         	send_byte(DATA_TYPE, {1'b0, add_op, crc4_generate(B, A, add_op)}, q_test_score);
+	         	send_byte(DATA_TYPE, {1'b0, add_op, crc4_generate(B, A, add_op)});
          	end
          	er_crc_op: begin : case_er_crc_op
 	         	crc4_err = crc4_generate(B, A, op_set) + 1;
-        			send_calculation_data(B, A, add_op, crc4_err, q_test_score);
+        			send_calculation_data(B, A, add_op, crc4_err);
          	end
          	er_op_op: begin : case_er_op_op
 	         	op_set = 3'b010;
-	         	send_calculation_data(B, A, add_op, crc4_generate(B,A,add_op), q_test_score);
+	         	send_calculation_data(B, A, add_op, crc4_generate(B,A,add_op));
          	end
          	
            default: begin
-	           send_calculation_data(B, A, op_set, crc4_generate(B,A,op_set), q_test_score);
+	           send_calculation_data(B, A, op_set, crc4_generate(B,A,op_set));
            end
          endcase // case (op_set)
          // print coverage after each loop
@@ -358,20 +436,42 @@ typedef enum bit[2:0] {and_op			= 3'b000,
    bit [31:0] cap_B;
    bit [31:0] cap_C;
    bit [7:0] cap_CTL;
+   bit [10:0] sin_temp;
    
    bit [3:0] pred_CRC4;
 	shortint predicted_result;
    
    bit [3:0] pred_flags; // {Carry, Overflow, Zero, Negative}
    
+   always @(posedge clk) begin
+	   
+   end
+   /*
+   wait_for_sin_sof;   
    
+   jeśli sin 1 -> 0
+   	do zmiennej zapisz
+   	jeśli potem sin = 0
+   		data <= {data[9:0],sin};
+   		do zmiennej data zapisz
+   	jeśli sin = 1
+   		ctl <= {data[9:0],sin};
+   		do zmiennej ctl zapisz
+	   		
+	   przypisanie do kolejki
+		   if(dat_a)
+			   q_sin_A.push_front(data_A[8:1]);
+		   	q_sin_B.push_front(data_B[8:1]);
+		   	q_sin_CTL.push_front(data_CTL[8:1]);
+		 */  
+      
 
    always @(posedge clk) begin
 		capture_c(cap_C, cap_CTL, done);
    end
 
    always @(posedge done) begin : scoreboard
-	   
+	   /*
 	   cap_B[31:24] = q_test_score.pop_back();
 	   cap_B[23:16] = q_test_score.pop_back();
 	   cap_B[15:8] = q_test_score.pop_back();
@@ -382,7 +482,7 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 	   cap_A[7:0] = q_test_score.pop_back();
 	   
 	   cap_CTL = q_test_score.pop_back();
-	   
+	   */
 	   pred_CRC4 = crc4_generate(cap_B, cap_A, cap_CTL[6:4]);
       
       #1;
@@ -407,12 +507,8 @@ typedef enum bit[2:0] {and_op			= 3'b000,
       if (predicted_result != cap_C)
           $error ("FAILED: A: %0h  B: %0h  op: %s result: %0h",
                   A, B, op_set.name(), cap_C);
-                  */
+      */            
       done = 1'b0;
    end : scoreboard
    
 endmodule : top
-
-
-
-

@@ -35,14 +35,25 @@ typedef enum bit[2:0] {and_op			= 3'b000,
    reg [10:0] captured_C2 = 0;
    reg [10:0] captured_C3 = 0;
    reg [10:0] captured_C4 = 0;
+	reg [10:0] captured_B1 = 0;
+   reg [10:0] captured_B2 = 0;
+   reg [10:0] captured_B3 = 0;
+   reg [10:0] captured_B4 = 0;
+	reg [10:0] captured_A1 = 0;
+   reg [10:0] captured_A2 = 0;
+   reg [10:0] captured_A3 = 0;
+   reg [10:0] captured_A4 = 0;
    reg [10:0] captured_CTL = 0;
    reg [10:0] captured_ERROR = 0;
 	
 	bit [3:0] op_flags = 0;
 	bit [3:0] crc4_err = 0;
 	
-	bit [7:0] q_test_score[$];
+	bit [7:0] q_sin[$];
 	bit [7:0] q_alu_score[$];
+	bit [3:0] test = 4'b0000;
+	bit [3:0] CRC_test = 0;
+	bit [2:0] op;
 	   
 	operation_t  op_set;
 
@@ -53,94 +64,163 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 // Custom Macros/Tasks/Functions
 //------------------------------------------------------------------------------
 	
-	task send_byte(input frame_type, input [7:0] essence, inout [7:0] queue[$]);
+	task send_byte(input frame_type, input [7:0] essence);
 	begin
 		sin <= 1'b0;
-		@(posedge clk)
+		@(negedge clk)
 		sin <= frame_type;
-		@(posedge clk)
+		@(negedge clk)
 		sin = essence[7];
-     	@(posedge clk)
+     	@(negedge clk)
       sin = essence[6];
-      @(posedge clk)
+      @(negedge clk)
       sin = essence[5];
-      @(posedge clk)
+      @(negedge clk)
       sin = essence[4];
-      @(posedge clk)
+      @(negedge clk)
       sin = essence[3];
-      @(posedge clk)
+      @(negedge clk)
       sin = essence[2];
-      @(posedge clk)
+      @(negedge clk)
       sin = essence[1];
-      @(posedge clk)
+      @(negedge clk)
       sin = essence[0];
-      @(posedge clk)
+      @(negedge clk)
 		sin <= 1'b1;
-		@(posedge clk);
-		queue.push_front(essence[7:0]);
+		@(negedge clk);
 	end
 	endtask
 
-	task send_calculation_data (input [31:0] B, input [31:0] A, input [2:0] OP, input [3:0] CRC, inout [7:0] queue[$]);
+	task send_calculation_data (input [31:0] B, input [31:0] A, input [2:0] OP, input [3:0] CRC);
 	begin
-		send_byte(DATA_TYPE, B[31:24], queue);
-		send_byte(DATA_TYPE, B[23:16], queue);
-		send_byte(DATA_TYPE, B[15:8], queue);
-		send_byte(DATA_TYPE, B[7:0], queue);
+		send_byte(DATA_TYPE, B[31:24]);
+		send_byte(DATA_TYPE, B[23:16]);
+		send_byte(DATA_TYPE, B[15:8]);
+		send_byte(DATA_TYPE, B[7:0]);
 		
-		send_byte(DATA_TYPE, A[31:24], queue);
-		send_byte(DATA_TYPE, A[23:16], queue);
-		send_byte(DATA_TYPE, A[15:8], queue);
-		send_byte(DATA_TYPE, A[7:0], queue);		
+		send_byte(DATA_TYPE, A[31:24]);
+		send_byte(DATA_TYPE, A[23:16]);
+		send_byte(DATA_TYPE, A[15:8]);
+		send_byte(DATA_TYPE, A[7:0]);		
 	
-		send_byte(CMD_TYPE, {1'b0, OP, CRC}, queue);
+		send_byte(CMD_TYPE, {1'b0, OP, CRC});
 		
 	end	
 	endtask
 	
 	task wait_for_sof;
 	begin
-		while(t_sout == 1)
+		while(sout == 1)
+			@(posedge clk);
+	end
+	endtask
+	
+	task wait_for_sin_sof;
+	begin
+		while(sin == 1)
 			@(posedge clk);
 	end
 	endtask
 	
 	task capture_c (output bit [31:0] cap_C, output bit [7:0] cap_CTL, output bit done);
-		
+
 	begin
-		wait_for_sof;
-		repeat (11)
+		//wait_for_sof;
+		repeat (12)
 		begin
-			captured_C1 <= {captured_C1[9:0], t_sout};
-			@(posedge clk);
+			captured_C1 <= {captured_C1[9:0], sout};
+			@(negedge clk);
 		end
-		@(posedge clk);
+		//@(posedge clk);
 		repeat (11)
 		begin
-			captured_C2 <= {captured_C2[9:0], t_sout};
-			@(posedge clk);
+			captured_C2 <= {captured_C2[9:0], sout};
+			@(negedge clk);
 		end
-		@(posedge clk);
+		//@(posedge clk);
 		repeat (11)
 		begin
-			captured_C3 <= {captured_C3[9:0], t_sout};
-			@(posedge clk);
+			captured_C3 <= {captured_C3[9:0], sout};
+			@(negedge clk);
 		end
-		@(posedge clk);
+		//@(posedge clk);
 		repeat (11)
 		begin
-			captured_C4 <= {captured_C4[9:0], t_sout};
-			@(posedge clk);
+			captured_C4 <= {captured_C4[9:0], sout};
+			@(negedge clk);
 		end
-		@(posedge clk);
+		//@(posedge clk);
 		repeat (11)
 		begin
-			captured_CTL <= {captured_CTL[9:0], t_sout};
-			@(posedge clk);
+			captured_CTL <= {captured_CTL[9:0], sout};
+			@(negedge clk);
 		end		
 		cap_C = {captured_C1[8:1], captured_C2[8:1], captured_C3[8:1], captured_C4[8:1]};
 		cap_CTL = captured_CTL[8:1]; 
 		done = 1'b1;
+	end
+	endtask
+	
+	task sin_to_queue (output bit [31:0] cap_A, output bit [31:0] cap_B, output bit [7:0] cap_CTL, ref [7:0] queue[$]);
+		
+	begin
+		//wait_for_sin_sof;
+		repeat (12)
+		begin
+			captured_B1 <= {captured_B1[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_B2 <= {captured_B2[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_B3 <= {captured_B3[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_B4 <= {captured_B4[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_A1 <= {captured_A1[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_A2 <= {captured_A2[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_A3 <= {captured_A3[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_A4 <= {captured_A4[9:0], sin};
+			@(posedge clk);
+		end
+		//@(negedge clk);
+		repeat (11)
+		begin
+			captured_CTL <= {captured_CTL[9:0], sin};
+			@(posedge clk);
+		end
+		cap_B = {captured_B1[8:1], captured_B2[8:1], captured_B3[8:1], captured_B4[8:1]};
+		cap_A = {captured_A1[8:1], captured_A2[8:1], captured_A3[8:1], captured_A4[8:1]};
+		cap_CTL = captured_CTL[8:1];
 	end
 	endtask
 	
@@ -174,7 +254,7 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 			$display("Test is correct");
 		end
 	endtask
-	
+	/*
 	function [3:0] crc4_generate;
 	input [31:0] B;
 	input [31:0] A;
@@ -192,7 +272,28 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 	       crc4_generate = reminder;
 	   end
 	endfunction
+	*/
 	
+	//CRC for 68 bits 
+   function [3:0] crc4_generate;
+   // polynomial: x^4 + x^1 + 1
+    input [67:0] Data;
+    input [3:0] crc;
+    reg [67:0] d;
+    reg [3:0] c;
+    reg [3:0] newcrc;
+    begin
+        d = Data;
+        c = crc;
+   
+       newcrc[0] = d[66] ^ d[64] ^ d[63] ^ d[60] ^ d[56] ^ d[55] ^ d[54] ^ d[53] ^ d[51] ^ d[49] ^ d[48] ^ d[45] ^ d[41] ^ d[40] ^ d[39] ^ d[38] ^ d[36] ^ d[34] ^ d[33] ^ d[30] ^ d[26] ^ d[25] ^ d[24] ^ d[23] ^ d[21] ^ d[19] ^ d[18] ^ d[15] ^ d[11] ^ d[10] ^ d[9] ^ d[8] ^ d[6] ^ d[4] ^ d[3] ^ d[0] ^ c[0] ^ c[2];
+       newcrc[1] = d[67] ^ d[66] ^ d[65] ^ d[63] ^ d[61] ^ d[60] ^ d[57] ^ d[53] ^ d[52] ^ d[51] ^ d[50] ^ d[48] ^ d[46] ^ d[45] ^ d[42] ^ d[38] ^ d[37] ^ d[36] ^ d[35] ^ d[33] ^ d[31] ^ d[30] ^ d[27] ^ d[23] ^ d[22] ^ d[21] ^ d[20] ^ d[18] ^ d[16] ^ d[15] ^ d[12] ^ d[8] ^ d[7] ^ d[6] ^ d[5] ^ d[3] ^ d[1] ^ d[0] ^ c[1] ^ c[2] ^ c[3];
+       newcrc[2] = d[67] ^ d[66] ^ d[64] ^ d[62] ^ d[61] ^ d[58] ^ d[54] ^ d[53] ^ d[52] ^ d[51] ^ d[49] ^ d[47] ^ d[46] ^ d[43] ^ d[39] ^ d[38] ^ d[37] ^ d[36] ^ d[34] ^ d[32] ^ d[31] ^ d[28] ^ d[24] ^ d[23] ^ d[22] ^ d[21] ^ d[19] ^ d[17] ^ d[16] ^ d[13] ^ d[9] ^ d[8] ^ d[7] ^ d[6] ^ d[4] ^ d[2] ^ d[1] ^ c[0] ^ c[2] ^ c[3];
+       newcrc[3] = d[67] ^ d[65] ^ d[63] ^ d[62] ^ d[59] ^ d[55] ^ d[54] ^ d[53] ^ d[52] ^ d[50] ^ d[48] ^ d[47] ^ d[44] ^ d[40] ^ d[39] ^ d[38] ^ d[37] ^ d[35] ^ d[33] ^ d[32] ^ d[29] ^ d[25] ^ d[24] ^ d[23] ^ d[22] ^ d[20] ^ d[18] ^ d[17] ^ d[14] ^ d[10] ^ d[9] ^ d[8] ^ d[7] ^ d[5] ^ d[3] ^ d[2] ^ c[1] ^ c[3];
+       crc4_generate = newcrc;
+    end
+   endfunction :crc4_generate 
+   
 	function [2:0] crc3_generate;
     input [31:0] C;
     input [3:0] FLAGS;
@@ -281,9 +382,9 @@ typedef enum bit[2:0] {and_op			= 3'b000,
         	3'b100 : return add_op;
         	3'b101 : return sub_op;
 	     	3'b010 : return no_op;
-			3'b011 : return er_data_op;
-			3'b110 : return er_crc_op;
-			3'b111 : return er_op_op; 
+			3'b011 : return and_op;//er_data_op;
+			3'b110 : return or_op;//er_crc_op;
+			3'b111 : return add_op;//er_op_op; 
       endcase // case (op_choice)
    endfunction : get_op
 
@@ -303,49 +404,55 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 // Tester main
    
    initial begin : tester
+	   sin = 1'b1;
       rst_n = 1'b0;
       @(negedge clk);
       @(negedge clk);
       rst_n = 1'b1;
+	   //sin = 1'b1;
       repeat (1000) begin : tester_main
          @(negedge clk);
          op_set = get_op();
          A = get_data();
          B = get_data();
+         @(negedge clk);
          case (op_set) // handle the start signal
          	no_op: begin: case_no_op
               @(posedge clk);  	
          	end 
-         	
+         	/*
          	er_data_op: begin : case_er_data_op        	
-	         	send_byte(DATA_TYPE, B[31:24], q_test_score);
-        			send_byte(DATA_TYPE, B[23:16], q_test_score);
-        			send_byte(DATA_TYPE, B[15:8], q_test_score);
-        			send_byte(DATA_TYPE, B[7:0], q_test_score);
+	         	send_byte(DATA_TYPE, B[31:24]);
+        			send_byte(DATA_TYPE, B[23:16]);
+        			send_byte(DATA_TYPE, B[15:8]);
+        			send_byte(DATA_TYPE, B[7:0]);
         
-        			send_byte(DATA_TYPE, A[31:24], q_test_score);
-        			send_byte(DATA_TYPE, A[23:16], q_test_score);
-        			send_byte(DATA_TYPE, A[15:8], q_test_score);
-        			send_byte(DATA_TYPE, A[7:0], q_test_score);
+        			send_byte(DATA_TYPE, A[31:24]);
+        			send_byte(DATA_TYPE, A[23:16]);
+        			send_byte(DATA_TYPE, A[15:8]);
+        			send_byte(DATA_TYPE, A[7:0]);
 	         	
-	         	send_byte(DATA_TYPE, {1'b0, add_op, crc4_generate(B, A, add_op)}, q_test_score);
+	         	send_byte(DATA_TYPE, {1'b0, add_op, crc4_generate(B, A, add_op)});
          	end
          	er_crc_op: begin : case_er_crc_op
 	         	crc4_err = crc4_generate(B, A, op_set) + 1;
-        			send_calculation_data(B, A, add_op, crc4_err, q_test_score);
+        			send_calculation_data(B, A, add_op, crc4_err);
          	end
          	er_op_op: begin : case_er_op_op
 	         	op_set = 3'b010;
-	         	send_calculation_data(B, A, add_op, crc4_generate(B,A,add_op), q_test_score);
+	         	send_calculation_data(B, A, add_op, crc4_generate(B,A,add_op));
          	end
-         	
-           default: begin
-	           send_calculation_data(B, A, op_set, crc4_generate(B,A,op_set), q_test_score);
+         	*/
+           default: begin	           
+	           CRC_test = crc4_generate({B,A,1'b1,op},4'h0);
+	           //CRC_test = crc4_generate(B, A, 3'b000);
+	           send_calculation_data(B, A, op_set, CRC_test);
            end
          endcase // case (op_set)
          // print coverage after each loop
          // can also be used to stop the simulation when cov=100%
          // $strobe("%0t %0g",$time, $get_coverage());
+         #1000;
       end
       $finish;
    end : tester
@@ -357,21 +464,45 @@ typedef enum bit[2:0] {and_op			= 3'b000,
    bit [31:0] cap_A;
    bit [31:0] cap_B;
    bit [31:0] cap_C;
-   bit [7:0] cap_CTL;
+   bit [7:0] cap_CTL_1;
+   bit [7:0] cap_CTL_2;
+   bit [10:0] sin_temp;
    
    bit [3:0] pred_CRC4;
 	shortint predicted_result;
    
    bit [3:0] pred_flags; // {Carry, Overflow, Zero, Negative}
    
+   /*
+   wait_for_sin_sof;   
    
+   jeśli sin 1 -> 0
+   	do zmiennej zapisz
+   	jeśli potem sin = 0
+   		data <= {data[9:0],sin};
+   		do zmiennej data zapisz
+   	jeśli sin = 1
+   		ctl <= {data[9:0],sin};
+   		do zmiennej ctl zapisz
+	   		
+	   przypisanie do kolejki
+		   if(dat_a)
+			   q_sin_A.push_front(data_A[8:1]);
+		   	q_sin_B.push_front(data_B[8:1]);
+		   	q_sin_CTL.push_front(data_CTL[8:1]);
+		 */  
+      
 
-   always @(posedge clk) begin
-		capture_c(cap_C, cap_CTL, done);
+   always @(negedge sin) begin
+	sin_to_queue(cap_A,cap_B,cap_CTL_1);
+   end
+   
+   always @(negedge sout) begin
+		capture_c(cap_C, cap_CTL_2, done);
    end
 
    always @(posedge done) begin : scoreboard
-	   
+	   /*
 	   cap_B[31:24] = q_test_score.pop_back();
 	   cap_B[23:16] = q_test_score.pop_back();
 	   cap_B[15:8] = q_test_score.pop_back();
@@ -382,8 +513,8 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 	   cap_A[7:0] = q_test_score.pop_back();
 	   
 	   cap_CTL = q_test_score.pop_back();
-	   
-	   pred_CRC4 = crc4_generate(cap_B, cap_A, cap_CTL[6:4]);
+	   */
+	   //pred_CRC4 = crc4_generate(cap_B, cap_A, cap_CTL[6:4]);
       
       #1;
       case (op_set)

@@ -1,4 +1,4 @@
-TOOL:	xrun	19.09-s003: Started on Oct 26, 2020 at 08:43:58 CET
+TOOL:	xrun	19.09-s003: Started on Oct 26, 2020 at 21:56:53 CET
 xrun
 	-elaborate
 	-l xrun_elaborate.log
@@ -60,7 +60,7 @@ xmelab: *W,DLCVAR (/home/student/wpotaczek/cds.lib,1): cds.lib Invalid environme
 	Building instance overlay tables: ....
 	         	op_set = 3'b010;
 	         	         |
-xmelab: *W,ENUMERR (./alu_tb.sv,338|20): This assignment is a violation of SystemVerilog strong typing rules for enumeration datatypes.
+xmelab: *W,ENUMERR (./alu_tb.sv,417|20): This assignment is a violation of SystemVerilog strong typing rules for enumeration datatypes.
 ................ Done
 	Enabling instrumentation for coverage types: block expression FSM toggle functional
 	Generating native compiled code:
@@ -70,24 +70,24 @@ xmvlog_cg: *W,DLCVAR (/home/student/wpotaczek/cds.lib,1): cds.lib Invalid enviro
 			streams:   7, words:  4287
 			streams:   9, words: 28418
 			streams:   7, words:  3741
-		worklib.top:sv <0x78305c13>
-			streams:  37, words: 78883
-	bit [7:0] q_test_score[$];
-	                     |
-xmelab: *W,COVUTA (./alu_tb.sv,44|22): Toggle coverage is not supported for SystemVerilog integer, real, string, dynamic array, sparse memory and reference ports. It is also not supported for VHDL multi-dimensional array and array of record. There may also be other such objects in the design.
+		worklib.top:sv <0x34a7093a>
+			streams:  56, words: 72549
+	bit [7:0] q_sin[$];
+	              |
+xmelab: *W,COVUTA (./alu_tb.sv,52|15): Toggle coverage is not supported for SystemVerilog integer, real, string, dynamic array, sparse memory and reference ports. It is also not supported for VHDL multi-dimensional array and array of record. There may also be other such objects in the design.
 	Building instance specific data structures.
 	Performing constant object marking (COM) analysis.
 	Loading native compiled code:     .................... Done
 	Design hierarchy summary:
 		                 Instances  Unique
 		Modules:                 5       5
-		Registers:             120     120
+		Registers:             132     132
 		Scalar wires:            9       -
 		Vectored wires:          2       -
 		Always blocks:          14      14
-		Initial blocks:         12      12
+		Initial blocks:         21      21
 		Cont. assignments:       1       1
 		Pseudo assignments:      2       2
 		Simulation timescale:  1ps
 	Writing initial simulation snapshot: worklib.top:sv
-TOOL:	xrun	19.09-s003: Exiting on Oct 26, 2020 at 08:43:58 CET  (total: 00:00:00)
+TOOL:	xrun	19.09-s003: Exiting on Oct 26, 2020 at 21:56:54 CET  (total: 00:00:01)
