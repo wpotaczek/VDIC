@@ -6,56 +6,42 @@ module top;
 // type and variable definitions
 //------------------------------------------------------------------------------
 
-typedef enum bit[2:0] {and_op			= 3'b000,
-							  or_op 			= 3'b001,
-                       add_op 		= 3'b100,
-                       sub_op 		= 3'b101,
-                       no_op 			= 3'b010,
-                       er_data_op	= 3'b011,
-                       er_crc_op 	= 3'b110,
-                       er_op_op 		= 3'b111} operation_t;
+	typedef enum bit[2:0] {and_op			= 3'b000,
+							  	  or_op 			= 3'b001,
+                       	  add_op 		= 3'b100,
+                       	  sub_op 		= 3'b101,
+                       	  er_data_op	= 3'b010,
+                       	  er_crc_op 	= 3'b011,
+                       	  er_op_op 		= 3'b110} operation_t;
 	
 	
 	
 	localparam 	DATA_TYPE = 1'b0,
-					CMD_TYPE = 1'b1;
+					CMD_TYPE = 1'b1,
+					ERR_DATA_FRAME = 8'b11001001,
+					ERR_CRC_FRAME = 8'b10100101,
+					ERR_OP_FRAME = 8'b10010011;
 	
-	logic		clk;
-	logic		rst_n;
+	bit		clk;
+	bit		rst_n;
 	bit		sin;
-	bit		sout;
+	wire		sout;
    	
 	
 	bit [31:0]    A;
 	bit [31:0]    B;
-	bit [31:0]    C;
 	
-	reg [10:0] captured_sin1 = 0;
-   reg [10:0] captured_sin2 = 0;
-   reg [10:0] captured_sin3 = 0;
-   reg [10:0] captured_sin4 = 0;
-	reg [10:0] captured_sin5 = 0;
-	reg [10:0] captured_sin6 = 0;
-	reg [10:0] captured_sin7 = 0;
-	reg [10:0] captured_sin8 = 0;
-	reg [10:0] captured_sin9 = 0;
-	reg [10:0] captured_sout1 = 0;
-   reg [10:0] captured_sout2 = 0;
-   reg [10:0] captured_sout3 = 0;
-   reg [10:0] captured_sout4 = 0;
-   reg [10:0] captured_sout5 = 0;
-		
+	reg [10:0] captured_sin = 0;
+	reg [10:0] captured_sout = 0;
+			
 	logic [7:0] q_sin_A_scor[$];
 	logic [7:0] q_sin_B_scor[$];
 	logic [7:0] q_sin_CTL_scor[$];	
-	
-	bit [3:0] CRC_test;
-	bit [3:0] crc_error;
-	
-	bit done = 1'b0;
-	
-	bit [2:0] op;
-	   
+	logic [7:0] q_sin_A_cov[$];
+	logic [7:0] q_sin_B_cov[$];
+	logic [7:0] q_sin_CTL_cov[$];
+
+	bit [2:0] op;	   
 	operation_t  op_set;
 
 	assign op = op_set;
@@ -109,126 +95,121 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 	end	
 	endtask
 	
-	task capture_c (output bit [31:0] cap_C, output bit [7:0] cap_CTL, output bit done);
-	begin
-			repeat (12)
-			begin
-				captured_sout1 <= {captured_sout1[9:0], sout};
-				@(negedge clk);
-			end
-			if(captured_sout1[9] == 1'b0) begin
-			repeat (11)
-			begin
-				captured_sout2 <= {captured_sout2[9:0], sout};
-				@(negedge clk);
-			end
-			repeat (11)
-			begin
-				captured_sout3 <= {captured_sout3[9:0], sout};
-				@(negedge clk);
-			end
-			repeat (11)
-			begin
-				captured_sout4 <= {captured_sout4[9:0], sout};
-				@(negedge clk);
-			end	
-			repeat (11)
-			begin
-				captured_sout5 <= {captured_sout5[9:0], sout};
-				@(negedge clk);
-			end		
-			cap_C = {captured_sout1[8:1], captured_sout2[8:1], captured_sout3[8:1], captured_sout4[8:1]};
-			cap_CTL = captured_sout5[8:1]; 
-			end
-			else begin
-				cap_C = 1'b0;
-				cap_CTL = captured_sout1[8:1];
-			end				
-			//done = 1'b1;
-		end
-	endtask
-	
-	task automatic sin_to_queue(ref [7:0] q_sin_A_scor[$], ref [7:0] q_sin_B_scor[$], ref [7:0] q_sin_CTL_scor[$]);		
-	begin
+	task capture_sout (output bit [31:0] cap_C, output bit [7:0] cap_CTL);
+	begin	
 		repeat (12)
 		begin
-			captured_sin1 <= {captured_sin1[9:0], sin};
-			@(posedge clk);
+			captured_sout <= {captured_sout[9:0], sout};
+			@(negedge clk);
 		end
-		repeat (11)
-		begin
-			captured_sin2 <= {captured_sin2[9:0], sin};
-			@(posedge clk);
+		
+		if(captured_sout[9] == 1'b0) begin
+			cap_C[7:0] = captured_sout[8:1];
+			repeat (3)
+			begin				
+				repeat (11)
+				begin
+					captured_sout <= {captured_sout[9:0], sout};
+					@(negedge clk);
+				end
+				cap_C <= {cap_C,captured_sout[8:1]};
+			end
+			
+			repeat (11)
+			begin
+				captured_sout <= {captured_sout[9:0], sout};
+				@(negedge clk);
+			end			
+			cap_CTL = captured_sout[8:1]; 
 		end
-		repeat (11)
-		begin
-			captured_sin3 <= {captured_sin3[9:0], sin};
-			@(posedge clk);
-		end
-		repeat (11)
-		begin
-			captured_sin4 <= {captured_sin4[9:0], sin};
-			@(posedge clk);
-		end		
-		if((captured_sin1[9] == 1'b1) | (captured_sin2[9] == 1'b1) | (captured_sin3[9] == 1'b1) |(captured_sin4[9] == 1'b1)) begin
-			q_sin_B_scor.push_front(captured_sin1[8:1]);
-			q_sin_B_scor.push_front(captured_sin2[8:1]);
-			q_sin_B_scor.push_front(captured_sin3[8:1]);
-			q_sin_CTL_scor.push_front(captured_sin4[8:1]);
-		end
+		
 		else begin
-			q_sin_B_scor.push_front(captured_sin1[8:1]);
-			q_sin_B_scor.push_front(captured_sin2[8:1]);
-			q_sin_B_scor.push_front(captured_sin3[8:1]);
-			q_sin_B_scor.push_front(captured_sin4[8:1]);
+			cap_C = 1'b0;
+			cap_CTL = captured_sout[8:1];
 		end
-		//q_sin_B_scor.push_front({captured_sin1[8:1], captured_sin2[8:1], captured_sin3[8:1], captured_sin4[8:1]});
-		repeat (11)
-		begin
-			captured_sin5 <= {captured_sin5[9:0], sin};
-			@(posedge clk);
-		end
-		repeat (11)
-		begin
-			captured_sin6 <= {captured_sin6[9:0], sin};
-			@(posedge clk);
-		end
-		repeat (11)
-		begin
-			captured_sin7 <= {captured_sin7[9:0], sin};
-			@(posedge clk);
-		end
-		repeat (11)
-		begin
-			captured_sin8 <= {captured_sin8[9:0], sin};
-			@(posedge clk);
-		end
-		if((captured_sin5[9] == 1'b1) | (captured_sin6[9] == 1'b1) | (captured_sin7[9] == 1'b1) |(captured_sin8[9] == 1'b1)) begin
-			q_sin_A_scor.push_front(captured_sin5[8:1]);
-			q_sin_A_scor.push_front(captured_sin6[8:1]);
-			q_sin_A_scor.push_front(captured_sin7[8:1]);
-			q_sin_CTL_scor.push_front(captured_sin8[8:1]);
-		end
-		else begin
-			q_sin_A_scor.push_front(captured_sin5[8:1]);
-			q_sin_A_scor.push_front(captured_sin6[8:1]);
-			q_sin_A_scor.push_front(captured_sin7[8:1]);
-			q_sin_A_scor.push_front(captured_sin8[8:1]);
-		end			
-		//q_sin_A_scor.push_front(captured_sin1[8:1]);
-		//q_sin_A_scor.push_front(captured_sin2[8:1]);
-		//q_sin_A_scor.push_front(captured_sin3[8:1]);
-		//q_sin_A_scor.push_front(captured_sin4[8:1]);
-		//q_sin_A_scor.push_front({captured_sin1[8:1], captured_sin2[8:1], captured_sin3[8:1], captured_sin4[8:1]});
-		repeat (11)
-		begin
-			captured_sin9 <= {captured_sin9[9:0], sin};
-			@(posedge clk);
-		end
-		q_sin_CTL_scor.push_front(captured_sin9[8:1]);
 	end
 	endtask
 	
+	task automatic sin_to_queue(ref [7:0] q_A[$], ref [7:0] q_B[$], ref [7:0] q_CTL[$]);		
+	begin
+		repeat (12)
+		begin
+			captured_sin <= {captured_sin[9:0], sin};
+			@(posedge clk);
+		end
+		if(captured_sin[9] == 1'b1)
+			q_CTL.push_front(captured_sin[8:1]);
+		else
+			q_B.push_front(captured_sin[8:1]);
+		repeat (3)
+		begin
+			repeat (11)
+			begin
+				captured_sin <= {captured_sin[9:0], sin};
+				@(posedge clk);
+			end
+			if(captured_sin[9] == 1'b1)
+				q_CTL.push_front(captured_sin[8:1]);
+			else begin
+				q_B.push_front(captured_sin[8:1]);				
+			end
+		end
+		repeat (4)
+		begin
+			repeat (11)
+			begin
+				captured_sin <= {captured_sin[9:0], sin};
+				@(posedge clk);
+			end
+			if(captured_sin[9] == 1'b1)
+				q_CTL.push_front(captured_sin[8:1]);
+			else begin
+				q_A.push_front(captured_sin[8:1]);				
+			end
+		end
+		repeat (11)
+			begin
+				captured_sin <= {captured_sin[9:0], sin};
+				@(posedge clk);
+			end			
+		q_CTL.push_front(captured_sin[8:1]);
+	end
+	endtask
+	
+	task automatic decode_sin(ref [7:0] q_A[$], ref [7:0] q_B[$], ref [7:0] q_CTL[$], output [31:0] A_data, output [31:0] B_data, output [2:0] op_data);
+	begin
+		bit [7:0] CTL_data;
+		
+		if((q_A.size() < 4) | (q_B.size() < 4) | (q_CTL.size() > 1)) begin
+			op_data = er_data_op;
+		   q_A.delete();
+		   q_B.delete();
+		   q_CTL.delete();
+	   end
+	   
+	   else begin
+	   	A_data[31:24] = q_A.pop_back();
+	   	A_data[23:16] = q_A.pop_back();
+	   	A_data[15:8] = q_A.pop_back();
+	   	A_data[7:0] = q_A.pop_back();
+	   
+	  		B_data[31:24] = q_B.pop_back();
+	   	B_data[23:16] = q_B.pop_back();
+	   	B_data[15:8] = q_B.pop_back();
+	   	B_data[7:0] = q_B.pop_back();
+		   
+	   	CTL_data = q_CTL.pop_back();
+		   op_data = CTL_data[6:4];	
+	   	   
+	   	if(CTL_data[3:0] != crc4_generate({B_data,A_data,1'b1,op_data},4'h0))
+	   		op_data = er_crc_op;
+	   	
+	   	else if(CTL_data[5] == 1'b1)
+		   	op_data = er_op_op;	   
+	   end
+	end
+	endtask		
+		
    function [3:0] crc4_generate;
    // polynomial: x^4 + x^1 + 1
     input [67:0] Data;
@@ -284,32 +265,36 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 //------------------------------------------------------------------------------
 // Coverage block
 //------------------------------------------------------------------------------
-/*
-   covergroup op_cov;
 
+	reg [31:0] A_cov;
+	reg [31:0] B_cov;
+	reg [2:0] OP_cov;
+	
+	always @(negedge sin) begin
+		sin_to_queue(q_sin_A_cov,q_sin_B_cov,q_sin_CTL_cov);
+	   decode_sin(q_sin_A_cov,q_sin_B_cov,q_sin_CTL_cov, A_cov, B_cov, OP_cov);
+   end
+
+   covergroup op_cov;	   
+	   
       option.name = "cg_op_cov";
 
-      coverpoint op_set {
+      coverpoint OP_cov {
          // #A1 test all operations
-         bins A1_single_cycle[] = {[add_op : xor_op], rst_op,no_op};
-         bins A1_multi_cycle = {mul_op};
+         bins A1_single_cycle[] = {[and_op : er_op_op]};
 
-         // #A2 test all operations after reset
-         bins A2_rst_opn[] = (rst_op => [add_op:mul_op]);
+         //#A2 two operations in row
+         bins A2_twoops[] = ([add_op:sub_op] [* 2]);
+	      
+	     	//#A3 two errors in row
+         bins A3_twoops[] = ([er_data_op:er_op_op] [* 2]);
+	      
+	      // #A4 test all operations after errors
+         bins A4_op_er[] = ([er_data_op:er_op_op] => [and_op:sub_op]);
+	      
+	      // #A5 test all errors after operations
+         bins A5_er_op[] = ([and_op:sub_op] => [er_data_op:er_op_op]);
 
-         // #A3 test reset after all operations
-         bins A3_opn_rst[] = ([add_op:mul_op] => rst_op);
-
-         // #A4 multiply after single-cycle operation
-         bins A4_sngl_mul[] = ([add_op:xor_op],no_op => mul_op);
-
-         // #A5 single-cycle operation after multiply
-         bins A5_mul_sngl[] = (mul_op => [add_op:xor_op], no_op);
-
-         // #A6 two operations in row
-         bins A6_twoops[] = ([add_op:mul_op] [* 2]);
-
-         // bins manymult = (mul_op [* 3:5]);
       }
 
    endgroup
@@ -318,54 +303,70 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 
       option.name = "cg_zeros_or_ones_on_ops";
 
-      all_ops : coverpoint op_set {
-         ignore_bins null_ops = {rst_op, no_op};
+      all_ops : coverpoint OP_cov {
+         bins opss = {[and_op : er_op_op]};
       }
 
-      a_leg: coverpoint A {
-         bins zeros = {'h00};
-         bins others= {['h01:'hFE]};
-         bins ones  = {'hFF};
+      a_leg: coverpoint A_cov {
+         bins zeros = {'h0000_0000};
+         bins others= {['h0000_0001:'hFFFF_FFFE]};
+         bins ones  = {'hFFFF_FFFF};
       }
-
-      b_leg: coverpoint B {
-         bins zeros = {'h00};
-         bins others= {['h01:'hFE]};
-         bins ones  = {'hFF};
+      
+      b_leg: coverpoint B_cov {
+         bins zeros = {'h0000_0000};
+         bins others= {['h0000_0001:'hFFFF_FFFE]};
+         bins ones  = {'hFFFF_FFFF};
       }
 
       B_op_00_FF:  cross a_leg, b_leg, all_ops {
 
          // #B1 simulate all zero input for all the operations
 
-         bins B1_add_00 = binsof (all_ops) intersect {add_op} &&
-                       (binsof (a_leg.zeros) || binsof (b_leg.zeros));
-
          bins B1_and_00 = binsof (all_ops) intersect {and_op} &&
                        (binsof (a_leg.zeros) || binsof (b_leg.zeros));
 
-         bins B1_xor_00 = binsof (all_ops) intersect {xor_op} &&
+         bins B1_or_00 = binsof (all_ops) intersect {or_op} &&
                        (binsof (a_leg.zeros) || binsof (b_leg.zeros));
 
-         bins B1_mul_00 = binsof (all_ops) intersect {mul_op} &&
+         bins B1_add_00 = binsof (all_ops) intersect {add_op} &&
+                       (binsof (a_leg.zeros) || binsof (b_leg.zeros));
+
+         bins B1_sub_00 = binsof (all_ops) intersect {sub_op} &&
+                       (binsof (a_leg.zeros) || binsof (b_leg.zeros));
+	      
+	      bins B1_err_data_00 = binsof (all_ops) intersect {er_data_op} &&
+                       (binsof (a_leg.zeros) || binsof (b_leg.zeros));
+	      
+	      bins B1_err_crc_00 = binsof (all_ops) intersect {er_crc_op} &&
+                       (binsof (a_leg.zeros) || binsof (b_leg.zeros));
+	      
+	    	bins B1_err_op_00 = binsof (all_ops) intersect {er_op_op} &&
                        (binsof (a_leg.zeros) || binsof (b_leg.zeros));
 
          // #B2 simulate all one input for all the operations
 
-         bins B2_add_FF = binsof (all_ops) intersect {add_op} &&
-                       (binsof (a_leg.ones) || binsof (b_leg.ones));
-
          bins B2_and_FF = binsof (all_ops) intersect {and_op} &&
                        (binsof (a_leg.ones) || binsof (b_leg.ones));
 
-         bins B2_xor_FF = binsof (all_ops) intersect {xor_op} &&
+         bins B2_or_FF = binsof (all_ops) intersect {or_op} &&
                        (binsof (a_leg.ones) || binsof (b_leg.ones));
 
-         bins B2_mul_FF = binsof (all_ops) intersect {mul_op} &&
+         bins B2_add_FF = binsof (all_ops) intersect {add_op} &&
                        (binsof (a_leg.ones) || binsof (b_leg.ones));
 
-         bins B2_mul_max = binsof (all_ops) intersect {mul_op} &&
-                        (binsof (a_leg.ones) && binsof (b_leg.ones));
+         bins B2_sub_FF = binsof (all_ops) intersect {sub_op} &&
+                       (binsof (a_leg.ones) || binsof (b_leg.ones));
+	      
+         bins B2_err_data_FF = binsof (all_ops) intersect {er_data_op} &&
+                       (binsof (a_leg.ones) || binsof (b_leg.ones));
+	      
+         bins B2_err_crc_FF = binsof (all_ops) intersect {er_crc_op} &&
+                       (binsof (a_leg.ones) || binsof (b_leg.ones));
+	      
+         bins B2_err_op_FF = binsof (all_ops) intersect {er_op_op} &&
+                       (binsof (a_leg.ones) || binsof (b_leg.ones));
+
 
          ignore_bins others_only =
                                   binsof(a_leg.others) && binsof(b_leg.others);
@@ -388,7 +389,7 @@ typedef enum bit[2:0] {and_op			= 3'b000,
          c_00_FF.sample();
       end
    end : coverage
-*/
+
 
 //------------------------------------------------------------------------------
 // Clock generator
@@ -416,20 +417,19 @@ typedef enum bit[2:0] {and_op			= 3'b000,
         	3'b001 : return or_op;
         	3'b100 : return add_op;
         	3'b101 : return sub_op;
-	     	3'b010 : return no_op;
-			3'b011 : return er_data_op;
-			3'b110 : return er_crc_op;
-			3'b111 : return er_op_op;
+			3'b010 : return er_data_op;
+			3'b011 : return er_crc_op;
+			3'b110 : return er_op_op;
       endcase // case (op_choice)
    endfunction : get_op
 
 //---------------------------------
    function byte get_data();
-      bit [7:0] zero_ones;
+      bit [1:0] zero_ones;
       zero_ones = $random;
-      if (zero_ones == 8'h00)
+      if (zero_ones == 2'b00)
         return 32'h0000_0000;
-      else if (zero_ones == 8'hFF)
+      else if (zero_ones == 2'b11)
         return 32'hFFFF_FFFF;
       else
         return $random;
@@ -437,9 +437,18 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 
 //------------------------
 // Tester main
+
+	bit [3:0] crc_error;
+   bit err_data_rand = 1'b0;   
    
    initial begin : tester
 	   sin = 1'b1;
+      rst_n = 1'b0;
+      @(negedge clk);
+      @(negedge clk);
+      rst_n = 1'b1;
+      @(negedge clk);
+      @(negedge clk);	   
       rst_n = 1'b0;
       @(negedge clk);
       @(negedge clk);
@@ -450,23 +459,40 @@ typedef enum bit[2:0] {and_op			= 3'b000,
          A = get_data();
          B = get_data();
          @(negedge clk);
-         case (op_set) // handle the start signal
-         	no_op: begin: case_no_op
-              @(posedge clk);  	
-         	end         	
-         	er_data_op: begin : case_er_data_op        	
-	         	send_byte(DATA_TYPE, B[31:24]);
-        			send_byte(DATA_TYPE, B[23:16]);
-        			send_byte(DATA_TYPE, B[15:8]);
-        			send_byte(DATA_TYPE, B[7:0]);
+         case (op_set) // handle the start signal        	
+         	er_data_op: begin : case_er_data_op 
+	         	if(err_data_rand) begin
+			     		send_byte(CMD_TYPE, {1'b0, add_op, crc4_generate({B,A,1'b1,add_op},4'h0)});
+        				send_byte(DATA_TYPE, B[23:16]);
+        				send_byte(DATA_TYPE, B[15:8]);
+        				send_byte(DATA_TYPE, B[7:0]);
         
-        			send_byte(DATA_TYPE, A[31:24]);
-        			send_byte(DATA_TYPE, A[23:16]);
-        			send_byte(DATA_TYPE, A[15:8]);
+        				send_byte(DATA_TYPE, A[31:24]);
+        				send_byte(DATA_TYPE, A[23:16]);
+        				send_byte(DATA_TYPE, A[15:8]);
+			         send_byte(DATA_TYPE, A[7:0]);
 	         	
-	         	send_byte(CMD_TYPE, {1'b0, add_op, crc4_generate({B,A,1'b1,add_op},4'h0)});
-	         	send_byte(1'b1,{8'b11111111});
-         	end
+	         		send_byte(CMD_TYPE, {1'b0, add_op, crc4_generate({B,A,1'b1,add_op},4'h0)});
+	         		send_byte(1'b1,{8'b11111111});
+			         	
+			         err_data_rand = 1'b0;
+		        	end
+	         	else begin	
+			     		send_byte(DATA_TYPE, B[31:24]);
+        				send_byte(DATA_TYPE, B[23:16]);
+        				send_byte(DATA_TYPE, B[15:8]);
+        				send_byte(DATA_TYPE, B[7:0]);
+        
+     					send_byte(DATA_TYPE, A[31:24]);
+        				send_byte(DATA_TYPE, A[23:16]);
+        				send_byte(DATA_TYPE, A[15:8]);
+	         	
+	         		send_byte(CMD_TYPE, {1'b0, add_op, crc4_generate({B,A,1'b1,add_op},4'h0)});
+	         		send_byte(1'b1,{8'b11111111});
+			         	
+			         err_data_rand = 1'b1;
+		         end
+	         end         	
          	er_crc_op: begin : case_er_crc_op
 	         	crc_error = (crc4_generate({B,A,1'b1,op},4'h0) + 1'b1);
         			send_calculation_data(B, A, add_op, crc_error);
@@ -474,9 +500,8 @@ typedef enum bit[2:0] {and_op			= 3'b000,
          	er_op_op: begin : case_er_op_op
 	         	send_calculation_data(B, A, op_set, crc4_generate({B,A,1'b1,op},4'h0));
          	end
-           default: begin	           
-	           CRC_test = crc4_generate({B,A,1'b1,op},4'h0);
-	           send_calculation_data(B, A, op_set, CRC_test);
+           default: begin
+	           send_calculation_data(B, A, op_set, crc4_generate({B,A,1'b1,op},4'h0));
            end
          endcase // case (op_set)
          // print coverage after each loop
@@ -491,14 +516,12 @@ typedef enum bit[2:0] {and_op			= 3'b000,
 // Scoreboard
 //------------------------------------------------------------------------------
 
-   bit [31:0] cap_A;
-   bit [31:0] cap_B;
+   bit [31:0] A_scor;
+   bit [31:0] B_scor;
    bit [31:0] cap_C;
-   bit [7:0] cap_CTL_sin;
    bit [7:0] cap_CTL_sout;
    bit [7:0] pred_CTL;
-   bit [10:0] sin_temp;
-   operation_t cap_OP;
+   operation_t OP_scor;
    
 	shortint predicted_result;
    bit [31:0] pred_C;
@@ -506,80 +529,51 @@ typedef enum bit[2:0] {and_op			= 3'b000,
    
    bit [3:0] pred_flags; // {Carry, Overflow, Zero, Negative}
    
+   bit done = 1'b0;
+   
     
 
    always @(negedge sin) begin
 		sin_to_queue(q_sin_A_scor,q_sin_B_scor,q_sin_CTL_scor);
+	   decode_sin(q_sin_A_scor,q_sin_B_scor,q_sin_CTL_scor, A_scor, B_scor, OP_scor);
    end
    
    always @(negedge sout) begin
-		capture_c(cap_C, cap_CTL_sout, done);
+		capture_sout(cap_C, cap_CTL_sout);
 	   done = 1'b1;
    end
 
-   always @(posedge done) begin : scoreboard
-	   
-	   if((q_sin_A_scor.size() < 4) | (q_sin_B_scor.size() < 4) | (q_sin_CTL_scor.size() < 1)) begin
-			cap_OP = er_data_op;
-		   q_sin_A_scor.delete();
-		   q_sin_B_scor.delete();
-		   q_sin_CTL_scor.delete();
-	   end
-	   
-	   else begin
-	   	cap_A[31:24] = q_sin_A_scor.pop_back();
-	   	cap_A[23:16] = q_sin_A_scor.pop_back();
-	   	cap_A[15:8] = q_sin_A_scor.pop_back();
-	   	cap_A[7:0] = q_sin_A_scor.pop_back();
-	   
-	  		cap_B[31:24] = q_sin_B_scor.pop_back();
-	   	cap_B[23:16] = q_sin_B_scor.pop_back();
-	   	cap_B[15:8] = q_sin_B_scor.pop_back();
-	   	cap_B[7:0] = q_sin_B_scor.pop_back();
-	   	//cap_A = q_sin_A_scor.pop_back();
-	   	//cap_B = q_sin_B_scor.pop_back();
-	   	cap_CTL_sin = q_sin_CTL_scor.pop_back();
-		   cap_OP = cap_CTL_sin[6:4];	
-	   	   
-	   	if(cap_CTL_sin[5] == 1'b1)
-		   	cap_OP = er_op_op;
-	   
-	   	else if(cap_CTL_sin[3:0] != crc4_generate({cap_B,cap_A,1'b1,cap_OP},4'h0))
-	   		cap_OP = er_crc_op;
-	   end
-	   
-      case (cap_OP)
-        and_op: pred_C = cap_A & cap_B;
-        or_op: pred_C = cap_A | cap_B;
-        add_op: pred_C = cap_A + cap_B;
-        sub_op: pred_C = cap_B - cap_A;
+   always @(posedge done) begin : scoreboard	   
+  
+      case (OP_scor)
+        and_op: pred_C = A_scor & B_scor;
+        or_op: pred_C = A_scor | B_scor;
+        add_op: pred_C = A_scor + B_scor;
+        sub_op: pred_C = B_scor - A_scor;
 	    default: pred_C = 0;
       endcase // case (op_set)  
 
-      case(cap_OP)
-	      er_crc_op: pred_CTL = 8'b10100101;
-	      er_op_op: pred_CTL = 8'b10010011;
-	      er_data_op: pred_CTL = 8'b11001001;
+      case(OP_scor)
+	      er_crc_op: pred_CTL = ERR_CRC_FRAME;
+	      er_op_op: pred_CTL = ERR_OP_FRAME;
+	      er_data_op: pred_CTL = ERR_DATA_FRAME;
 	      default: begin
 		      pred_flags[0] = pred_C[31];
 		      pred_flags[1] = (pred_C == 0);
-		      pred_flags[2] = (((cap_OP == add_op) && !(cap_A[31]^cap_B[31]) && (cap_A[31]^pred_C[31])) || ((cap_OP == sub_op) && !(cap_A[31]^pred_C[31]) && (cap_B[31]^pred_C[31])));
-		      pred_flags[3] = (((cap_OP == add_op) && ((pred_C < cap_A) || (pred_C < cap_B))) || ((cap_OP == sub_op) && (cap_B < pred_C)));;
+		      pred_flags[2] = (((OP_scor == add_op) && !(A_scor[31]^B_scor[31]) && (A_scor[31]^pred_C[31])) || ((OP_scor == sub_op) && !(A_scor[31]^pred_C[31]) && (B_scor[31]^pred_C[31])));
+		      pred_flags[3] = (((OP_scor == add_op) && ((pred_C < A_scor) || (pred_C < B_scor))) || ((OP_scor == sub_op) && (B_scor < pred_C)));;
 		      pred_CRC = crc3_generate({pred_C,1'b0,pred_flags}, 3'b000);
 		      pred_CTL = {1'b0,pred_flags,pred_CRC};
 	      end
-      endcase
+      endcase      
       
-      
-      if(op_set != no_op) begin
-	   	if((pred_C == cap_C) && (pred_CTL == cap_CTL_sout))
-		   	$display ("PASSED!!!");
-	   	else
-		   	$error ("FAILED: A: %0h  B: %0h  op: %s result: %0h",
-                  A, B, op_set.name(), cap_C);
-      end   
-      #5;
- 	done = 1'b0;
+		if((pred_C == cap_C) && (pred_CTL == cap_CTL_sout))
+			$display ("PASSED: A: %0h  B: %0h  op: %s result: %0h",
+                  A, B, OP_scor.name(), cap_C);
+	   else
+		  	$error ("FAILED: A: %0h  B: %0h  op: %s result: %0h",
+                  A, B, OP_scor.name(), cap_C);
+ 		done = 1'b0;
    end : scoreboard
    
 endmodule : top
