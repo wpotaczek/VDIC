@@ -97,5 +97,3 @@
 [INFO ] 2020-10-29 22:55:04,573 [com.cadence.mdv.imc.Main] [main] - Binding debug tools http on port: 35617
 [INFO ] 2020-10-29 22:57:55,074 [com.cadence.mdv.imc.Main] [main] - Binding debug tools http on port: 45188
 [INFO ] 2020-10-29 22:57:59,322 [com.cadence.mdv.imc.Main] [main] - Binding debug tools http on port: 45989
-[INFO ] 2020-10-29 23:03:09,170 [com.cadence.mdv.imc.Main] [main] - Binding debug tools http on port: 35172
-[INFO ] 2020-10-29 23:03:13,442 [com.cadence.mdv.imc.Main] [main] - Binding debug tools http on port: 33455

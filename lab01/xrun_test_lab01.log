@@ -1,4 +1,4 @@
-TOOL:	xrun	19.09-s003: Started on Oct 29, 2020 at 23:03:04 CET
+TOOL:	xrun	19.09-s003: Started on Oct 29, 2020 at 22:57:50 CET
 xrun
 	-f alu_dut.f
 		mtm_Alu.vp
@@ -1055,7 +1055,7 @@ PASSED: A: fffffff5  B: 0  op: or_op result: ffffffff
 PASSED: A: 0  B: 44  op: and_op result: 0
 PASSED: A: ffffffaf  B: 22  op: add_op result: 44
 Simulation complete via $finish(1) at time 2034420 NS + 0
-./alu_tb.sv:512       $finish;
+./alu_tb.sv:513       $finish;
 xcelium> exit
 See ./cov_work/scope/lab01/icc.com file for message(s) on coverage constant object marking
 
@@ -1068,4 +1068,4 @@ coverage setup:
 coverage files:
   model(design data) :  ./cov_work/scope/icc_7c196957_714e7001.ucm
   data               :  ./cov_work/scope/lab01/icc_7c196957_714e7001.ucd
-TOOL:	xrun	19.09-s003: Exiting on Oct 29, 2020 at 23:03:05 CET  (total: 00:00:01)
+TOOL:	xrun	19.09-s003: Exiting on Oct 29, 2020 at 22:57:51 CET  (total: 00:00:01)
