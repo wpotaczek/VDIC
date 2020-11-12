@@ -17,7 +17,7 @@ class tester;
 	
 	function new(virtual alu_bfm b);
 		bfm = b;
-	endfunction :new
+	endfunction : new
 	 
    
 	protected function operation_t get_op();
