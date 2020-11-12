@@ -18,7 +18,10 @@ class scoreboard;
 	function new(virtual alu_bfm b);
 		bfm = b;
 	endfunction : new
-	
+
+	bit [10:0] failed = 1'b0;
+
+	task execute();
 
    bit [31:0] A_scor;
    bit [31:0] B_scor;
@@ -35,14 +38,11 @@ class scoreboard;
    
    bit done = 1'b0;
 	bit [10:0] passed = 1'b0;
-	bit [10:0] failed = 1'b0;
 	
 	logic [7:0] q_sin_A_scor[$];
 	logic [7:0] q_sin_B_scor[$];
 	logic [7:0] q_sin_CTL_scor[$];
    
-	task execute();
-
 		forever begin
 			@(negedge bfm.sin)
 				bfm.sin_to_queue(q_sin_A_scor,q_sin_B_scor,q_sin_CTL_scor);

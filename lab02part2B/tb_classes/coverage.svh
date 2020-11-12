@@ -17,7 +17,7 @@ class coverage;
 
 	reg [31:0] A_cov;
 	reg [31:0] B_cov;
-	reg [2:0] OP_cov;
+	operationt_t OP_cov;
 	
    covergroup op_cov;	   
 	   

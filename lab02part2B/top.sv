@@ -15,12 +15,7 @@ module top;
 import alu_pkg::*
 `include "alu_macros.svh";
 
-	mtm_Alu DUT (
-		.clk(bfm.clk),
-		.rst_n(bfm.rst_n),
-		.sin(bfm.sin),
-		.sout(bfm.sout)
-	);
+	mtm_Alu DUT (.clk(bfm.clk), .rst_n(bfm.rst_n), .sin(bfm.sin), .sout(bfm.sout));
 	
 	alu_bfm bfm();
 	testbench testbench_h;
