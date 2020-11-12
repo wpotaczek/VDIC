@@ -64,52 +64,7 @@ class tester;
          	op_set = get_op();
          	A = get_data();
          	B = get_data();
-         	@(negedge bfm.clk);
-				case (op_set) // handle the start signal        	
-         		er_data_op: begin : case_er_data_op 
-	         		if(err_data_rand) begin
-		         		bfm.send_byte(CMD_TYPE, {1'b0, add_op, bfm.crc4_generate({B,A,1'b1,add_op},4'h0)});
-        					bfm.send_byte(DATA_TYPE, B[23:16]);
-        					bfm.send_byte(DATA_TYPE, B[15:8]);
-        					bfm.send_byte(DATA_TYPE, B[7:0]);
-        
-        					bfm.send_byte(DATA_TYPE, A[31:24]);
-        					bfm.send_byte(DATA_TYPE, A[23:16]);
-        					bfm.send_byte(DATA_TYPE, A[15:8]);
-			         	bfm.send_byte(DATA_TYPE, A[7:0]);
-	         	
-		         		bfm.send_byte(CMD_TYPE, {1'b0, add_op, bfm.crc4_generate({B,A,1'b1,add_op},4'h0)});
-	         			bfm.send_byte(1'b1,{8'b11111111});
-			         	
-			         	err_data_rand = 1'b0;
-		        		end
-	         		else begin
-			     			bfm.send_byte(DATA_TYPE, B[31:24]);
-        					bfm.send_byte(DATA_TYPE, B[23:16]);
-        					bfm.send_byte(DATA_TYPE, B[15:8]);
-        					bfm.send_byte(DATA_TYPE, B[7:0]);
-        
-     						bfm.send_byte(DATA_TYPE, A[31:24]);
-        					bfm.send_byte(DATA_TYPE, A[23:16]);
-        					bfm.send_byte(DATA_TYPE, A[15:8]);
-	         	
-	         			bfm.send_byte(CMD_TYPE, {1'b0, add_op, bfm.crc4_generate({B,A,1'b1,add_op},4'h0)});
-	         			bfm.send_byte(1'b1,{8'b11111111});
-			         	
-			         	err_data_rand = 1'b1;
-		         	end
-	         	end         	
-         		er_crc_op: begin : case_er_crc_op
-	         		//crc_error = (bfm.crc4_generate({B,A,1'b1,op},4'h0) + 1'b1);
-        				bfm.send_calculation_data(B, A, add_op, (bfm.crc4_generate({B,A,1'b1,op_set},4'h0) + 1'b1));
-         		end
-         		er_op_op: begin : case_er_op_op
-	         		bfm.send_calculation_data(B, A, op_set, bfm.crc4_generate({B,A,1'b1,op_set},4'h0));
-         		end
-           		default: begin
-	           		bfm.send_calculation_data(B, A, op_set, bfm.crc4_generate({B,A,1'b1,op_set},4'h0));
-           		end
-         	endcase
+	      	bfm.send_op(A, B, op_set);         	
          	// print coverage after each loop
          	// can also be used to stop the simulation when cov=100%
          	// $strobe("%0t %0g",$time, $get_coverage());

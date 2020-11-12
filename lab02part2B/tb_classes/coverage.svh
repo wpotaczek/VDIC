@@ -17,7 +17,7 @@ class coverage;
 
 	reg [31:0] A_cov;
 	reg [31:0] B_cov;
-	operationt_t OP_cov;
+	operation_t OP_cov;
 	
    covergroup op_cov;	   
 	   
@@ -126,6 +126,7 @@ class coverage;
    endfunction : new
 
    task execute();
+	   fork
 	   forever begin
 			@(negedge bfm.sin)
 				bfm.sin_to_queue(bfm.q_sin_A_cov,bfm.q_sin_B_cov,bfm.q_sin_CTL_cov);
@@ -135,7 +136,8 @@ class coverage;
          @(negedge bfm.clk);
          op_cov.sample();
         	zeros_or_ones_on_ops.sample();
-      end
+	   end
+	   join
    endtask
    
 endclass : coverage

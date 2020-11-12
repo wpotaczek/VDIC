@@ -21,9 +21,7 @@ class scoreboard;
 
 	bit [10:0] failed = 1'b0;
 
-	task execute();
-
-   bit [31:0] A_scor;
+	bit [31:0] A_scor;
    bit [31:0] B_scor;
    bit [31:0] cap_C;
    bit [7:0] cap_CTL_sout;
@@ -43,6 +41,8 @@ class scoreboard;
 	logic [7:0] q_sin_B_scor[$];
 	logic [7:0] q_sin_CTL_scor[$];
    
+   task execute();
+   	fork
 		forever begin
 			@(negedge bfm.sin)
 				bfm.sin_to_queue(q_sin_A_scor,q_sin_B_scor,q_sin_CTL_scor);
@@ -84,6 +84,7 @@ class scoreboard;
 				failed += 1;	
  			done = 1'b0;
 		end  
+		join
 	endtask
 	
 	function void print_results();

@@ -27,12 +27,6 @@ import alu_pkg::*;
 	reg [10:0] captured_sin = 0;
 	reg [10:0] captured_sout = 0;
 	bit [7:0] CTL_data;
-/*
-	bit [2:0] op;	   
-	operation_t  op_set;
-
-	assign op = op_set;
-*/
 
 //------------------------------------------------------------------------------
 // Clock generator
@@ -269,4 +263,32 @@ import alu_pkg::*;
       rst_n = 1'b1;
 	  endtask : reset_alu
 
+	task send_op(input bit [31:0] A, input bit [31:0] B, operation_t op_set);
+		@(negedge bfm.clk);
+				case (op_set) // handle the start signal        	
+         		er_data_op: begin : case_er_data_op 
+	         		bfm.send_byte(DATA_TYPE, B[31:24]);
+        				bfm.send_byte(DATA_TYPE, B[23:16]);
+        				bfm.send_byte(DATA_TYPE, B[15:8]);
+        				bfm.send_byte(DATA_TYPE, B[7:0]);
+        
+  						bfm.send_byte(DATA_TYPE, A[31:24]);
+     					bfm.send_byte(DATA_TYPE, A[23:16]);
+        				bfm.send_byte(DATA_TYPE, A[15:8]);
+	         	
+	         		bfm.send_byte(CMD_TYPE, {1'b0, add_op, bfm.crc4_generate({B,A,1'b1,add_op},4'h0)});
+	         		bfm.send_byte(1'b1,{8'b11111111});
+	         	end         	
+         		er_crc_op: begin : case_er_crc_op
+	         		//crc_error = (bfm.crc4_generate({B,A,1'b1,op},4'h0) + 1'b1);
+        				bfm.send_calculation_data(B, A, add_op, (bfm.crc4_generate({B,A,1'b1,op_set},4'h0) + 1'b1));
+         		end
+         		er_op_op: begin : case_er_op_op
+	         		bfm.send_calculation_data(B, A, op_set, bfm.crc4_generate({B,A,1'b1,op_set},4'h0));
+         		end
+           		default: begin
+	           		bfm.send_calculation_data(B, A, op_set, bfm.crc4_generate({B,A,1'b1,op_set},4'h0));
+           		end
+				endcase
+	endtask : send_op
 endinterface : alu_bfm
