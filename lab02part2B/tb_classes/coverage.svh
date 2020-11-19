@@ -126,18 +126,11 @@ class coverage;
    endfunction : new
 
    task execute();
-	   fork
 	   forever begin
-			@(negedge bfm.sin)
-				bfm.sin_to_queue(bfm.q_sin_A_cov,bfm.q_sin_B_cov,bfm.q_sin_CTL_cov);
-	   		bfm.decode_sin(bfm.q_sin_A_cov,bfm.q_sin_B_cov,bfm.q_sin_CTL_cov, A_cov, B_cov, OP_cov);
-	   end
-	   forever begin
-         @(negedge bfm.clk);
+	   	bfm.wait_sin(A_cov, B_cov, OP_cov);
          op_cov.sample();
         	zeros_or_ones_on_ops.sample();
 	   end
-	   join
    endtask
    
 endclass : coverage

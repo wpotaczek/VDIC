@@ -55,12 +55,12 @@ class tester;
       operation_t op_set;
 	   bit [3:0] crc_test;
 	   bit err_data_rand = 1'b0;
-		bfm.sin = 1'b1;
+		//bfm.sin = 1'b1;
 	   
 	   begin
 			bfm.reset_alu();
       	repeat (1000) begin : tester_main
-         	@(negedge bfm.clk);
+         	//@(negedge bfm.clk);
          	op_set = get_op();
          	A = get_data();
          	B = get_data();

@@ -16,13 +16,13 @@ import alu_pkg::*;
 
 	bit		clk;
 	bit		rst_n;
-	bit		sin;
+	bit		sin = 1'b1;
 	wire		sout;  
 			
 	
-	logic [7:0] q_sin_A_cov[$];
-	logic [7:0] q_sin_B_cov[$];
-	logic [7:0] q_sin_CTL_cov[$];
+	logic [7:0] q_A[$];
+	logic [7:0] q_B[$];
+	logic [7:0] q_CTL[$];
 	
 	reg [10:0] captured_sin = 0;
 	reg [10:0] captured_sout = 0;
@@ -125,7 +125,7 @@ import alu_pkg::*;
 	end
 	endtask
 	
-	task automatic sin_to_queue(ref [7:0] q_A[$], ref [7:0] q_B[$], ref [7:0] q_CTL[$]);		
+	task automatic sin_to_queue();		
 	begin
 			
 		repeat (12)
@@ -172,7 +172,7 @@ import alu_pkg::*;
 	end
 	endtask
 	
-	task automatic decode_sin(ref [7:0] q_A[$], ref [7:0] q_B[$], ref [7:0] q_CTL[$], output [31:0] A_data, output [31:0] B_data, operation_t op_data);
+	task automatic decode_sin(output [31:0] A_data, output [31:0] B_data, operation_t op_data);
 	begin
 				
 		if((q_A.size() < 4) | (q_B.size() < 4) | (q_CTL.size() > 1)) begin
@@ -204,7 +204,19 @@ import alu_pkg::*;
 	   end
 	end
 	endtask		
-		
+
+	task automatic wait_sin(output [31:0] A_data, output [31:0] B_data, operation_t op_data);
+		@(negedge sin)
+			sin_to_queue();
+	  		decode_sin(A_data, B_data, op_data);
+	endtask
+	
+	task automatic wait_sout(output bit [31:0] cap_C, output bit [7:0] cap_CTL, output bit done);
+		@(negedge sout)
+	   	capture_sout(cap_C, cap_CTL);
+		done = 1'b1;
+	endtask
+
    function [3:0] crc4_generate;
    // polynomial: x^4 + x^1 + 1
     input [67:0] Data;
@@ -264,31 +276,32 @@ import alu_pkg::*;
 	  endtask : reset_alu
 
 	task send_op(input bit [31:0] A, input bit [31:0] B, operation_t op_set);
-		@(negedge bfm.clk);
+		@(negedge clk);
 				case (op_set) // handle the start signal        	
          		er_data_op: begin : case_er_data_op 
-	         		bfm.send_byte(DATA_TYPE, B[31:24]);
-        				bfm.send_byte(DATA_TYPE, B[23:16]);
-        				bfm.send_byte(DATA_TYPE, B[15:8]);
-        				bfm.send_byte(DATA_TYPE, B[7:0]);
+	         		send_byte(DATA_TYPE, B[31:24]);
+        				send_byte(DATA_TYPE, B[23:16]);
+        				send_byte(DATA_TYPE, B[15:8]);
+        				send_byte(DATA_TYPE, B[7:0]);
         
-  						bfm.send_byte(DATA_TYPE, A[31:24]);
-     					bfm.send_byte(DATA_TYPE, A[23:16]);
-        				bfm.send_byte(DATA_TYPE, A[15:8]);
+  						send_byte(DATA_TYPE, A[31:24]);
+     					send_byte(DATA_TYPE, A[23:16]);
+        				send_byte(DATA_TYPE, A[15:8]);
 	         	
-	         		bfm.send_byte(CMD_TYPE, {1'b0, add_op, bfm.crc4_generate({B,A,1'b1,add_op},4'h0)});
-	         		bfm.send_byte(1'b1,{8'b11111111});
+	         		send_byte(CMD_TYPE, {1'b0, add_op, crc4_generate({B,A,1'b1,add_op},4'h0)});
+	         		send_byte(1'b1,{8'b11111111});
 	         	end         	
          		er_crc_op: begin : case_er_crc_op
 	         		//crc_error = (bfm.crc4_generate({B,A,1'b1,op},4'h0) + 1'b1);
-        				bfm.send_calculation_data(B, A, add_op, (bfm.crc4_generate({B,A,1'b1,op_set},4'h0) + 1'b1));
+        				send_calculation_data(B, A, add_op, (crc4_generate({B,A,1'b1,op_set},4'h0) + 1'b1));
          		end
          		er_op_op: begin : case_er_op_op
-	         		bfm.send_calculation_data(B, A, op_set, bfm.crc4_generate({B,A,1'b1,op_set},4'h0));
+	         		send_calculation_data(B, A, op_set, crc4_generate({B,A,1'b1,op_set},4'h0));
          		end
            		default: begin
-	           		bfm.send_calculation_data(B, A, op_set, bfm.crc4_generate({B,A,1'b1,op_set},4'h0));
+	           		send_calculation_data(B, A, op_set, crc4_generate({B,A,1'b1,op_set},4'h0));
            		end
 				endcase
 	endtask : send_op
+	
 endinterface : alu_bfm
