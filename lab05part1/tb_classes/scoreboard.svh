@@ -106,17 +106,17 @@ class scoreboard extends uvm_subscriber #(result_transaction);
      		
 	  	predicted = calc_pred_values(cmd);
 	  	//predicted.result[7:0] = calc_pred_flags(cmd);
-		
+		/*
 		data_str  = { cmd.convert2string(),
       " ==>  Actual " , t.convert2string(),
       "/Predicted ",predicted.convert2string()};
-
+*/
         if (!predicted.compare(t)) begin
-            `uvm_error("SELF CHECKER", {"FAIL: ",data_str})
+            //`uvm_error("SELF CHECKER", {"FAIL: ",data_str})
             failed += 1;
         end
-        else
-            `uvm_info ("SELF CHECKER", {"PASS: ", data_str}, UVM_HIGH)
+        //else
+          //  `uvm_info ("SELF CHECKER", {"PASS: ", data_str}, UVM_HIGH)
 			
 /*		
 		if((pred_C != t[39:8]) && (pred_CTL != t[7:0])) begin
