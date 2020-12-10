@@ -16,24 +16,32 @@
 class command_monitor extends uvm_component;
     `uvm_component_utils(command_monitor)
 
-    uvm_analysis_port #(command_s) ap;
-
+    virtual alu_bfm bfm;
+	
+    uvm_analysis_port #(random_command) ap;
+	
     function void build_phase(uvm_phase phase);
-        virtual alu_bfm bfm;
 
         if(!uvm_config_db #(virtual alu_bfm)::get(null, "*","bfm", bfm))
-            $fatal(1, "Failed to get BFM");
-
+            `uvm_fatal("COMMAND MONITOR", "Failed to get BFM")
+        
         bfm.command_monitor_h = this;
 
         ap                    = new("ap",this);
 
     endfunction : build_phase
 
-    function void write_to_monitor(command_s cmd);
-        //$display("COMMAND MONITOR: A:0x%2h B:0x%2h op: %s", cmd.A, cmd.B, cmd.op.name());
-        ap.write(cmd);
-    endfunction : write_to_monitor
+		function void write_to_monitor(bit [31:0] A, bit [31:0] B, operation_t op );
+     		//$display("COMMAND MONITOR: A:0x%2h B:0x%2h op: %s", cmd.A, cmd.B, cmd.op.name());
+        	random_command cmd;
+	    	`uvm_info("COMMAND MONITOR",$sformatf("MONITOR: A: %2h  B: %2h  op: %s",
+                A, B, op.name()), UVM_HIGH);
+	    	cmd 		= new("cmd");
+	    	cmd.A 	= A;
+	    	cmd.B 	= B;
+	    	cmd.op	= op;	    
+			ap.write(cmd);
+    	endfunction : write_to_monitor
 
     function new (string name, uvm_component parent);
         super.new(name,parent);

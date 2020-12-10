@@ -1,8 +1,7 @@
-class scoreboard extends uvm_subscriber #(bit [39:0]);
+class scoreboard extends uvm_subscriber #(result_transaction);
 	`uvm_component_utils(scoreboard)
 
-    virtual alu_bfm bfm;
-	uvm_tlm_analysis_fifo #(command_s) cmd_f;
+	uvm_tlm_analysis_fifo #(random_command) cmd_f;
 
     function new (string name, uvm_component parent);
         super.new(name, parent);
@@ -45,18 +44,19 @@ class scoreboard extends uvm_subscriber #(bit [39:0]);
      	end
 	endfunction
 		
-	function void calc_pred_value(command_s cmd);
+	function result_transaction calc_pred_values(random_command cmd);
+		result_transaction predicted;
+		predicted = new("predicted");
+		
 		case (cmd.op)
-     		and_op: pred_C = cmd.A & cmd.B;
-     		or_op: pred_C = cmd.A | cmd.B;
-       	add_op: pred_C = cmd.A + cmd.B;
-        	sub_op: pred_C = cmd.B - cmd.A;
-	    	default: pred_C = 0;
+     		and_op:	pred_C = cmd.A & cmd.B;
+     		or_op: 	pred_C = cmd.A | cmd.B;
+       	add_op: 	pred_C = cmd.A + cmd.B;
+        	sub_op: 	pred_C = cmd.B - cmd.A;
+	    	default: pred_C = 0;			
       endcase // case (op_set)		
-	endfunction : calc_pred_value
-	
-	function void calc_pred_flags(command_s cmd);
-		case(cmd.op)
+      
+      case(cmd.op)
 	   	er_crc_op: pred_CTL = ERR_CRC_FRAME;
 	      er_op_op: pred_CTL = ERR_OP_FRAME;
 	      er_data_op: pred_CTL = ERR_DATA_FRAME;
@@ -68,31 +68,68 @@ class scoreboard extends uvm_subscriber #(bit [39:0]);
 		     	pred_CRC = crc3_generate({pred_C,1'b0,pred_flags}, 3'b000);
 		     	pred_CTL = {1'b0,pred_flags,pred_CRC};
 	      end
+      endcase
+      predicted.result[39:8] = pred_C;
+      predicted.result[7:0] = pred_CTL;
+      return predicted;
+	endfunction : calc_pred_values
+	/*
+	function result_transaction calc_pred_flags(random_command cmd);
+		result_transaction predicted;
+		
+		case(cmd.op)
+	   	er_crc_op: predicted.result[7:0] = ERR_CRC_FRAME;
+	      er_op_op: predicted.result[7:0] = ERR_OP_FRAME;
+	      er_data_op: predicted.result[7:0] = ERR_DATA_FRAME;
+	  		default: begin
+		   	pred_flags[0] = pred_C[31];
+		     	pred_flags[1] = (pred_C == 0);
+		     	pred_flags[2] = (((cmd.op == add_op) && !(cmd.A[31]^cmd.B[31]) && (cmd.A[31]^pred_C[31])) || ((cmd.op == sub_op) && !(cmd.A[31]^pred_C[31]) && (cmd.B[31]^pred_C[31])));
+		     	pred_flags[3] = (((cmd.op == add_op) && ((pred_C < cmd.A) || (pred_C < cmd.B))) || ((cmd.op == sub_op) && (cmd.B < pred_C)));;
+		     	pred_CRC = crc3_generate({pred_C,1'b0,pred_flags}, 3'b000);
+		     	predicted.result[7:0] = {1'b0,pred_flags,pred_CRC};
+	      end
 		endcase
 	endfunction : calc_pred_flags
+	*/	
+	function void write(result_transaction t);
 		
-	function void write(bit [39:0] t);
-		
-		command_s cmd;
-		cmd.A = 0;
-		cmd.B = 0;
-		cmd.op = rst_op;
+		string data_str;
+		random_command cmd;
+		result_transaction predicted;
+		predicted = new("predicted");
 			
 		do
 			if (!cmd_f.try_get(cmd))
          	$fatal(1, "Missing command in self checker");
      	while (cmd.op == rst_op);
      		
-	  	calc_pred_value(cmd);
-	  	calc_pred_flags(cmd);
+	  	predicted = calc_pred_values(cmd);
+	  	//predicted.result[7:0] = calc_pred_flags(cmd);
+		
+		data_str  = { cmd.convert2string(),
+      " ==>  Actual " , t.convert2string(),
+      "/Predicted ",predicted.convert2string()};
+
+        if (!predicted.compare(t)) begin
+            `uvm_error("SELF CHECKER", {"FAIL: ",data_str})
+            failed += 1;
+        end
+        else
+            `uvm_info ("SELF CHECKER", {"PASS: ", data_str}, UVM_HIGH)
+			
+/*		
 		if((pred_C != t[39:8]) && (pred_CTL != t[7:0])) begin
 			//$display("NOT PASSED! op: %s %h %h %h %h", cmd.op.name(), pred_C, t[39:8], pred_CTL, t[7:0]);
 			failed += 1;	
 		end
-		//else
+		else
 			//$display("PASSED! op: %s %h %h %h %h", cmd.op.name(), pred_C, t[39:8], pred_CTL, t[7:0]);
-	endfunction
-	
+*/
+//$display("Predicted: %p, t: %p", predicted, t);
+endfunction
+
+
 	function void print_results();
 		begin
 			if(failed > 1)

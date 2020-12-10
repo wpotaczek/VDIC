@@ -1,10 +1,10 @@
-class coverage extends uvm_subscriber #(command_s);
+class coverage extends uvm_subscriber #(random_command);
 	
 	`uvm_component_utils(coverage)
 
-	protected bit [31:0] A_cov;
-	protected bit [31:0] B_cov;
-	protected operation_t OP_cov;
+	bit [31:0] A_cov;
+	bit [31:0] B_cov;
+	operation_t OP_cov;
 	
    covergroup op_cov;	   
 	   
@@ -112,10 +112,10 @@ class coverage extends uvm_subscriber #(command_s);
 	   zeros_or_ones_on_ops = new();
    endfunction : new
    
-	function void write(command_s t);
-   	A_cov      = t.A;
-      B_cov      = t.B;
-      OP_cov = t.op;
+	function void write(random_command t);
+   	A_cov    = t.A;
+      B_cov    = t.B;
+      OP_cov 	= t.op;
       op_cov.sample();
       zeros_or_ones_on_ops.sample();
 	endfunction : write

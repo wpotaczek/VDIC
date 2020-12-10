@@ -31,7 +31,7 @@ import alu_pkg::*;
 	bit [31:0] A_temp;
 	bit [31:0] B_temp;
 	operation_t OP_temp;
-	bit [3:0] start = 4'b0000;
+	bit [3:0] start = 4'b0;
 	bit done = 1'b0;
 	
 	
@@ -324,6 +324,7 @@ import alu_pkg::*;
          		end
          		rst_op: begin :rst_op
 	         		reset_alu();
+	         		start += 1;
 	         	end         		
            		default: begin
 	           		send_calculation_data(B, A, op_set, crc4_generate({B,A,1'b1,op_set},4'h0));
@@ -343,29 +344,27 @@ function operation_t op2enum(operation_t op);
     return opi;
 endfunction : op2enum
 
-
-command_s command;
-
 always @(posedge clk) begin : op_monitor
     //static bit in_command = 0;
     //if (start) begin : start_high
     //if (!in_command) begin : new_command
+    
    forever begin : self_checker
 		wait_sin(A_temp, B_temp, OP_temp);   			
 
-    	command.A  = A_temp;
-    	command.B  = B_temp;
-      command.op = op2enum(OP_temp);
-      command_monitor_h.write_to_monitor(command);
+    	//command.A  = A_temp;
+    	//command.B  = B_temp;
+      //command.op = op2enum(OP_temp);
+      command_monitor_h.write_to_monitor(A_temp, B_temp, op2enum(OP_temp));
       //in_command = (command.op != no_op);
     end
     //else // start low
     	//in_command            = 0;
 	forever begin
    	@(negedge rst_n) begin : rst_monitor
-    		command.op = rst_op;
+    		//op = rst_op;
     		if (command_monitor_h != null) //guard against VCS time 0 negedge
-        		command_monitor_h.write_to_monitor(command);
+        		command_monitor_h.write_to_monitor(0,0,rst_op);
    	end : rst_monitor
 	end
 end : op_monitor

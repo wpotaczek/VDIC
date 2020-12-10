@@ -25,29 +25,26 @@ package alu_pkg;
        							er_crc_op  	= 3'b011,
        							er_op_op  	= 3'b110,
        							rst_op		= 3'b111} operation_t;
-   
-   typedef struct packed {
-	   bit [31:0] A;
-	   bit [31:0] B;
-	   operation_t op;
-   } command_s;
-   
+
 	localparam  DATA_TYPE = 1'b0,
      				CMD_TYPE = 1'b1,
      				ERR_DATA_FRAME = 8'b11001001,
      				ERR_CRC_FRAME = 8'b10100101,
      				ERR_OP_FRAME = 8'b10010011;
 	
-	`include "coverage.svh"
-	`include "base_tester.svh"
-	`include "random_tester.svh"
-	`include "min_max_tester.svh"
-	`include "scoreboard.svh"
-	`include "driver.svh"	
-	`include "command_monitor.svh"	
-	`include "result_monitor.svh"	
-	`include "env.svh"
-	`include "random_test.svh"
-	`include "min_max_test.svh"
+`include "random_command.svh"
+`include "minmax_command.svh"
+`include "result_transaction.svh"
+`include "coverage.svh"
+`include "tester.svh"
+`include "scoreboard.svh"
+`include "driver.svh"
+`include "command_monitor.svh"
+`include "result_monitor.svh"
+
+`include "env.svh"
+
+`include "random_test.svh"
+`include "min_max_test.svh"
 
 endpackage : alu_pkg
