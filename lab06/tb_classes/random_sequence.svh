@@ -16,7 +16,7 @@ class random_sequence extends uvm_sequence #(sequence_item);
 	    command.op = rst_op;
 	    `uvm_send(command);
         
-        repeat (5000) begin : random_loop
+        repeat (1000) begin : random_loop
 //         start_item(command);
 //         assert(command.randomize());
 //         finish_item(command);
