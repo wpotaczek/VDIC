@@ -88,7 +88,8 @@ class wp_alu_monitor extends uvm_monitor;
 		forever begin
 			// FIXME Fill this place with the logic for collecting the data
 			// ...
-			wait(0);
+			//wait(0);
+			m_wp_alu_vif.wait_sin(m_collected_item.A, m_collected_item.B, m_collected_item.op);
 
 			`uvm_info(get_full_name(), $sformatf("Item collected :\n%s", m_collected_item.sprint()), UVM_MEDIUM)
 

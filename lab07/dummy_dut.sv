@@ -14,8 +14,8 @@
 module dummy_dut(
 	input wire clock,
 	input wire reset,
-	input wire valid,
-	output logic [7:0] data
+	input wire sin,
+	output wire sout
 );
 	
 	assign data = '1;

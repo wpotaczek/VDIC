@@ -22,19 +22,30 @@ class  wp_alu_item extends uvm_sequence_item;
 	// TODO Declare fields here
 	
 
-	rand int m_data;
+	//rand int m_data;
+	rand bit [31:0]   A; 
+   rand bit [31:0]   B;
+   rand operation_t	op;
+	
+	constraint op_con { op != rst_op;}
 
 	// it is a good practice to define a c_default_values_*
 	// constraint for each field in which you constrain the field to some
 	// default value or range. You can disable these constraints using
 	// set_constraint_mode() before you call the randomize() function
-	constraint c_default_values_data {
-		m_data inside {[1:10]};
-	}
+//	constraint c_default_values_data {
+//		m_data inside {[1:10]};
+//	}
 
+//	`uvm_object_utils_begin(wp_alu_item)
+//		`uvm_field_int(m_data, UVM_DEFAULT)
+//	`uvm_object_utils_end
+	
 	`uvm_object_utils_begin(wp_alu_item)
-		`uvm_field_int(m_data, UVM_DEFAULT)
-	`uvm_object_utils_end
+   	`uvm_field_int(A, UVM_ALL_ON)
+      `uvm_field_int(B, UVM_ALL_ON)
+      `uvm_field_enum(operation_t, op, UVM_ALL_ON)
+  	`uvm_object_utils_end
 
 	function new (string name = "wp_alu_item");
 		super.new(name);

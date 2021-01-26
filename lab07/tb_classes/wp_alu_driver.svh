@@ -89,7 +89,7 @@ class wp_alu_driver extends uvm_driver #(wp_alu_item);
 			// Send item_done and a response to the sequencer
 			seq_item_port.item_done();
 			// If the current transaction was interrupted by a reset you should set a field in the rsp item to indicate this to the sequence
-//			seq_item_port.put_response(rsp);
+			seq_item_port.put_response(rsp);
 		end
 	endtask : get_and_drive
 
@@ -103,7 +103,7 @@ class wp_alu_driver extends uvm_driver #(wp_alu_item);
 
 	virtual protected task drive_item(wp_alu_item item);
 		// FIXME Drive the item
-		
+		m_wp_alu_vif.send_op(item.A, item.B, item.op);
 	endtask : drive_item
 
 endclass : wp_alu_driver

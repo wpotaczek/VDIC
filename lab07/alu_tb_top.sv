@@ -25,12 +25,7 @@ module alu_tb_top;
 	// add other interfaces if needed
 
 	// TODO instantiate the DUT
-	dummy_dut dut(
-		clock,
-		reset,
-		vif.valid,
-		vif.data
-	);
+	mtm_Alu dut(clock, reset, vif.sin, vif.sout);
 
 	initial begin
 		// Propagate the interface to all the components that need it
