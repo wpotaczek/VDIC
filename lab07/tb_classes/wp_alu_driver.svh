@@ -102,7 +102,7 @@ class wp_alu_driver extends uvm_driver #(wp_alu_item);
 	endtask : reset_driver
 
 	virtual protected task drive_item(wp_alu_item item);
-		// FIXME Drive the item
+		// Drive the item
 		m_wp_alu_vif.send_op(item.A, item.B, item.op);
 	endtask : drive_item
 

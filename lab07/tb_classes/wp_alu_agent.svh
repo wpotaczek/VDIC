@@ -22,7 +22,9 @@ class wp_alu_agent extends uvm_agent;
 	wp_alu_driver m_driver;
 	wp_alu_sequencer m_sequencer;
 	wp_alu_monitor m_monitor;
+	wp_alu_result_monitor m_result_monitor;
 	wp_alu_coverage_collector m_coverage_collector;
+	wp_alu_scoreboard m_scoreboard;
 
 	// Add fields here
 	
@@ -44,9 +46,18 @@ class wp_alu_agent extends uvm_agent;
 		uvm_config_db#(wp_alu_config_obj)::set(this, "m_monitor", "m_config_obj", m_config_obj);
 		// Create the monitor
 		m_monitor = wp_alu_monitor::type_id::create("m_monitor", this);
+		
+		// Propagate the configuration object to monitor
+		uvm_config_db#(wp_alu_config_obj)::set(this, "m_result_monitor", "m_config_obj", m_config_obj);
+		// Create the monitor
+		m_result_monitor = wp_alu_result_monitor::type_id::create("m_result_monitor", this);
 
 		if(m_config_obj.m_coverage_enable) begin
 			m_coverage_collector = wp_alu_coverage_collector::type_id::create("m_coverage_collector", this);
+		end
+		
+		if(m_config_obj.m_checks_enable) begin
+			m_scoreboard = wp_alu_scoreboard::type_id::create("m_scoreboard", this);
 		end
 
 		if(m_config_obj.m_is_active == UVM_ACTIVE) begin
@@ -63,6 +74,11 @@ class wp_alu_agent extends uvm_agent;
 	virtual function void connect_phase(uvm_phase phase);
 		if(m_config_obj.m_coverage_enable) begin
 			m_monitor.m_collected_item_port.connect(m_coverage_collector.m_monitor_port);
+		end
+		
+		if(m_config_obj.m_checks_enable) begin
+			m_monitor.m_collected_item_port.connect(m_scoreboard.cmd_f.analysis_export);
+        	m_result_monitor.m_collected_item_port.connect(m_scoreboard.cmd_out.analysis_export);
 		end
 
 		if(m_config_obj.m_is_active == UVM_ACTIVE) begin

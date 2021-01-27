@@ -63,7 +63,7 @@ class wp_alu_example_sequence extends wp_alu_base_sequence;
 
 	virtual task body();
 		`uvm_do_with(req,
-			{ /* TODO add constraints here*/ } )
+			{ /* add constraints here*/ } )
 		get_response(rsp);
 	endtask : body
 
@@ -85,7 +85,7 @@ class wp_alu_random_sequence extends wp_alu_base_sequence;
 
 	virtual task body();
 //		`uvm_do_with(req,
-//			{ /* TODO add constraints here*/ } )
+//			{ /* add constraints here*/ } )
 //		get_response(rsp);
 
 		`uvm_info("SEQ_RANDOM","",UVM_MEDIUM)
@@ -96,14 +96,14 @@ class wp_alu_random_sequence extends wp_alu_base_sequence;
 //	    command.op = rst_op;
 //	    `uvm_send(command);
         
-		repeat (5000) begin : random_loop
+		repeat (1000) begin : random_loop
 //         start_item(command);
 //         assert(command.randomize());
 //         finish_item(command);
 			`uvm_rand_send(command)
 			get_response(rsp);
 		end : random_loop
-        //#500;
+//        #500;
 	endtask : body
 
 endclass : wp_alu_random_sequence
@@ -124,7 +124,7 @@ class wp_alu_minmax_sequence extends wp_alu_base_sequence;
 
 	virtual task body();
 //		`uvm_do_with(req,
-//			{ /* TODO add constraints here*/ } )
+//			{ /* add constraints here*/ } )
 //		get_response(rsp);
 
 		`uvm_info("SEQ_MINMAX","",UVM_MEDIUM)
@@ -135,7 +135,7 @@ class wp_alu_minmax_sequence extends wp_alu_base_sequence;
 //	     command.op = rst_op;
 //	     `uvm_send(command);
         
-		repeat (5000) begin : random_loop
+		repeat (1000) begin : random_loop
 //         start_item(command);
 //         assert(command.randomize());
 //         finish_item(command);
@@ -144,7 +144,7 @@ class wp_alu_minmax_sequence extends wp_alu_base_sequence;
                                       //command.B inside {32'h0, 32'hFFFF_FFFF};})      
 		get_response(rsp);
         end : random_loop
-        //#500;
+//        #500;
 
 	endtask : body
 

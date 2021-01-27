@@ -24,7 +24,7 @@ module alu_tb_top;
 
 	// add other interfaces if needed
 
-	// TODO instantiate the DUT
+	// instantiate the DUT
 	mtm_Alu dut(clock, reset, vif.sin, vif.sout);
 
 	initial begin

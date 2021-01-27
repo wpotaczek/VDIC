@@ -27,7 +27,7 @@ interface wp_alu_if(clock,reset);
 	bit checks_enable=1;
 	bit coverage_enable=1;
 
-	// TODO Declare interface signals here
+	// Declare interface signals here
 	
 	bit		sin = 1'b1;
 	bit		sout;  

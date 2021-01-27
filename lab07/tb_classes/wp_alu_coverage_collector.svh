@@ -27,7 +27,7 @@ class wp_alu_coverage_collector extends uvm_component;
 	// Connection to the monitor
 	uvm_analysis_imp_collected_item#(wp_alu_item, wp_alu_coverage_collector) m_monitor_port;
 
-	// TODO: More items and connections can be added if needed
+	// More items and connections can be added if needed
 
 	`uvm_component_utils(wp_alu_coverage_collector)
 	
@@ -37,7 +37,7 @@ class wp_alu_coverage_collector extends uvm_component;
 
 //	covergroup item_cg;
 //		option.per_instance = 1;
-//		// TODO add coverpoints here
+//		// add coverpoints here
 //		
 //	endgroup : item_cg
 	
@@ -146,8 +146,8 @@ class wp_alu_coverage_collector extends uvm_component;
 //		item_cg=new;
 //		item_cg.set_inst_name({get_full_name(), ".item_cg"});
 		op_cov = new();		
-		op_cov.set_inst_name({get_full_name(), ".op_cov"});
 	   zeros_or_ones_on_ops = new();
+		op_cov.set_inst_name({get_full_name(), ".op_cov"});
 		zeros_or_ones_on_ops.set_inst_name({get_full_name(), ".zeros_or_ones_on_ops"});
 	endfunction : new
 

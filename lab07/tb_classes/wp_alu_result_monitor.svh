@@ -1,19 +1,19 @@
 /******************************************************************************
 * DVT CODE TEMPLATE: monitor
-* Created by wpotaczek on Jan 22, 2021
+* Created by wpotaczek on Jan 26, 2021
 * uvc_company = wp, uvc_name = alu
 *******************************************************************************/
 
-`ifndef IFNDEF_GUARD_wp_alu_monitor
-`define IFNDEF_GUARD_wp_alu_monitor
+`ifndef IFNDEF_GUARD_wp_alu_result_monitor
+`define IFNDEF_GUARD_wp_alu_result_monitor
 
 //------------------------------------------------------------------------------
 //
-// CLASS: wp_alu_monitor
+// CLASS: wp_alu_result_monitor
 //
 //------------------------------------------------------------------------------
 
-class wp_alu_monitor extends uvm_monitor;
+class wp_alu_result_monitor extends uvm_monitor;
 
 	// The virtual interface to HDL signals.
 	protected virtual wp_alu_if m_wp_alu_vif;
@@ -27,7 +27,7 @@ class wp_alu_monitor extends uvm_monitor;
 	// Collected item is broadcast on this port
 	uvm_analysis_port #(wp_alu_item) m_collected_item_port;
 
-	`uvm_component_utils(wp_alu_monitor)
+	`uvm_component_utils(wp_alu_result_monitor)
 
 	function new (string name, uvm_component parent);
 		super.new(name, parent);
@@ -85,11 +85,22 @@ class wp_alu_monitor extends uvm_monitor;
 	endtask : run_phase
 
 	virtual protected task collect_items();
+		
+		bit [39:0] result;
+		bit [31:0] cap_C;
+  		bit [7:0] cap_CTL_sout;
+		bit done = 1'b0;
+		
 		forever begin
 			// Fill this place with the logic for collecting the data
 			// ...
-			//wait(0);
-			m_wp_alu_vif.wait_sin(m_collected_item.A, m_collected_item.B, m_collected_item.op);
+			m_wp_alu_vif.wait_sout(cap_C, cap_CTL_sout, done);
+   		if (done)
+	   	begin 
+	   		m_collected_item.result[39:8] = cap_C;
+   			m_collected_item.result[7:0] = cap_CTL_sout;
+   			done = 1'b0;
+	   	end
 
 //			`uvm_info(get_full_name(), $sformatf("Item collected :\n%s", m_collected_item.sprint()), UVM_MEDIUM)
 
@@ -108,6 +119,6 @@ class wp_alu_monitor extends uvm_monitor;
 		// Reset monitor specific state variables (e.g. counters, flags, buffers, queues, etc.)
 	endfunction : reset_monitor
 
-endclass : wp_alu_monitor
+endclass : wp_alu_result_monitor
 
 `endif // IFNDEF_GUARD_wp_alu_monitor

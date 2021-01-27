@@ -32,8 +32,11 @@ package wp_alu_pkg;
 	`include "wp_alu_item.svh"
 	// Monitor
 	`include "wp_alu_monitor.svh"
+	`include "wp_alu_result_monitor.svh"
 	// Coverage Collector
 	`include "wp_alu_coverage_collector.svh"
+	//Scoreboard
+	`include "wp_alu_scoreboard.svh"
 	// Driver
 	`include "wp_alu_driver.svh"
 	// Sequencer
